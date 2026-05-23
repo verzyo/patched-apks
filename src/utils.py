@@ -1,6 +1,7 @@
 import re
 import logging
 from typing import List, Optional
+from github.GithubException import BadCredentialsException
 from src import gh
 from sys import exit
 import subprocess
@@ -265,38 +266,54 @@ def extract_filename(response, fallback_url=None) -> str:
     return unquote(Path(path).name)
 
 def detect_github_release(user: str, repo: str, tag: str) -> dict:
-    repo_obj = gh.get_repo(f"{user}/{repo}")
-
     if tag == "latest":
-        release = repo_obj.get_latest_release()
-        logging.info(f"Fetched latest release: {release.tag_name}")
-        return release.raw_data
-
-    if tag in ["", "dev", "prerelease"]:
-        releases = list(repo_obj.get_releases())
-        if not releases:
-            raise ValueError(f"No releases found for {user}/{repo}")
-
-        if tag == "":
-            release = max(releases, key=lambda x: x.created_at)
-        elif tag == "dev":
-            devs = [r for r in releases if 'dev' in r.tag_name.lower()]
-            if not devs:
-                raise ValueError(f"No dev release found for {user}/{repo}")
-            release = max(devs, key=lambda x: x.created_at)
-        else:
-            pres = [r for r in releases if r.prerelease]
-            if not pres:
-                raise ValueError(f"No prerelease found for {user}/{repo}")
-            release = max(pres, key=lambda x: x.created_at)
-
-        logging.info(f"Fetched release: {release.tag_name}")
-        return release.raw_data
+        release_lookup = "latest"
+    elif tag in ["", "dev", "prerelease"]:
+        release_lookup = tag or "most recent"
+    else:
+        release_lookup = tag
 
     try:
+        repo_obj = gh.get_repo(f"{user}/{repo}")
+
+        if tag == "latest":
+            release = repo_obj.get_latest_release()
+            logging.info(f"Fetched latest release: {release.tag_name}")
+            return release.raw_data
+
+        if tag in ["", "dev", "prerelease"]:
+            releases = list(repo_obj.get_releases())
+            if not releases:
+                raise ValueError(f"No releases found for {user}/{repo}")
+
+            if tag == "":
+                release = max(releases, key=lambda x: x.created_at)
+            elif tag == "dev":
+                devs = [r for r in releases if 'dev' in r.tag_name.lower()]
+                if not devs:
+                    raise ValueError(f"No dev release found for {user}/{repo}")
+                release = max(devs, key=lambda x: x.created_at)
+            else:
+                pres = [r for r in releases if r.prerelease]
+                if not pres:
+                    raise ValueError(f"No prerelease found for {user}/{repo}")
+                release = max(pres, key=lambda x: x.created_at)
+
+            logging.info(f"Fetched release: {release.tag_name}")
+            return release.raw_data
+
         release = repo_obj.get_release(tag)
         logging.info(f"Fetched release: {release.tag_name}")
         return release.raw_data
+    except BadCredentialsException as exc:
+        logging.error(
+            "Bad GitHub credentials while fetching release metadata for %s/%s (%s). "
+            "Check GITHUB_TOKEN/GH_TOKEN permissions and validity.",
+            user,
+            repo,
+            release_lookup,
+        )
+        raise RuntimeError("Bad GitHub credentials for release lookup") from exc
     except Exception as e:
         logging.error(f"Error fetching release {tag} for {user}/{repo}: {e}")
         raise
