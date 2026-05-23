@@ -327,6 +327,7 @@ def plan_incremental(full_matrix: List[dict], old_manifest: Optional[dict],
                      existing_apks: List[str]) -> Tuple[List[dict], List[str], dict]:
     """Decide which entries need rebuilding.
     Returns (build_matrix, carry_over_apks, new_manifest_entries)."""
+    old_entries = (old_manifest or {}).get("entries", {}) if isinstance(old_manifest, dict) else {}
     existing_apk_set = set(existing_apks)
 
     build_matrix: List[dict] = []
