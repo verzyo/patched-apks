@@ -2,6 +2,7 @@
   "patch_list": [
     { "app_name": "youtube", "source": "morphe" },
     { "app_name": "proton-vpn", "source": "paresh" },
-    { "app_name": "proton-mail", "source": "de-vanced" }
+    { "app_name": "proton-mail", "source": "de-vanced" },
+    { "app_name": "smart_launcher", "source": "hoo-dles" }
   ]
 }
