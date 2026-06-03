@@ -8,5 +8,10 @@
     "app_name": "proton-vpn",
     "source": "paresh",
     "arches": ["arm64-v8a"]
+  },
+  {
+    "app_name": "proton-mail",
+    "source": "de-vanced",
+    "arches": ["arm64-v8a"]
   }
 ]
