@@ -1,0 +1,13 @@
+[
+  {
+    "patches": {
+      "Theme": {
+        "enabled": true,
+        "options": {
+          "darkThemeBackgroundColor": "@android:color/system_neutral1_900",
+          "lightThemeBackgroundColor": "@android:color/system_neutral1_50"
+        }
+      }
+    }
+  }
+]
