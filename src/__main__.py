@@ -235,10 +235,10 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
                         *exclude_patches, *include_patches
                     ]
                     
-                    # Pass options.json to Morphe CLI if it exists in the root directory
-                    options_path = Path("options.json")
+                    # Pass app-specific options JSON to Morphe CLI if it exists (e.g., patches/youtube-morphe-options.json)
+                    options_path = Path("patches") / f"{app_name}-{source}-options.json"
                     if options_path.exists():
-                        logging.info("⚙️ Found options.json in root. Passing to Morphe patcher...")
+                        logging.info(f"⚙️ Found options JSON for {app_name}. Passing to Morphe patcher...")
                         morphe_cmd.extend(["--options-file", str(options_path)])
                         
                     utils.run_process(morphe_cmd, capture=True, stream=True)

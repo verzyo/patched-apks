@@ -7,6 +7,9 @@
           "darkThemeBackgroundColor": "@android:color/system_neutral1_900",
           "lightThemeBackgroundColor": "@android:color/system_neutral1_50"
         }
+      },
+      "Custom branding": {
+        "enabled": false
       }
     }
   }
