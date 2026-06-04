@@ -3,6 +3,7 @@
     { "app_name": "youtube", "source": "morphe" },
     { "app_name": "proton-vpn", "source": "paresh" },
     { "app_name": "proton-mail", "source": "de-vanced" },
-    { "app_name": "smart-launcher", "source": "hoo-dles" }
+    { "app_name": "smart-launcher", "source": "hoo-dles" },
+    { "app_name": "twitch", "source": "de-vanced" }
   ]
 }
