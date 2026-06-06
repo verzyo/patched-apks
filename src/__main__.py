@@ -37,53 +37,62 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
     # DETECT SOURCE TYPE BASED ON DOWNLOADED FILES
     is_morphe = False
     is_revanced = False
+    is_revenge = source == "revenge"
 
-    # Check file contents to determine source type
-    for file in download_files:
-        if "morphe-cli" in file.name.lower():
-            is_morphe = True
-            break
-        elif "revanced-cli" in file.name.lower():
-            is_revanced = True
-            break
+    cli = None
+    patches = None
 
-    # If not detected by CLI name, check patch file extension
-    if not is_morphe and not is_revanced:
+    if is_revenge:
+        cli = utils.find_file(download_files, contains="lspatch", suffix=".jar")
+        patches = utils.find_file(download_files, contains="revenge", suffix=".apk")
+        logging.info("🔍 Detected: Revenge source type")
+    else:
+        # Check file contents to determine source type
         for file in download_files:
-            if file.suffix == ".mpp":
+            if "morphe-cli" in file.name.lower():
                 is_morphe = True
                 break
-            elif file.suffix in [".rvp", ".jar"] and "patches" in file.name.lower():
+            elif "revanced-cli" in file.name.lower():
                 is_revanced = True
                 break
 
-    # If still not detected, fallback to source name
-    if not is_morphe and not is_revanced:
-        is_morphe = "morphe" in source.lower() or "custom" in source.lower()
-        is_revanced = not is_morphe  # Default to ReVanced if not Morphe
+        # If not detected by CLI name, check patch file extension
+        if not is_morphe and not is_revanced:
+            for file in download_files:
+                if file.suffix == ".mpp":
+                    is_morphe = True
+                    break
+                elif file.suffix in [".rvp", ".jar"] and "patches" in file.name.lower():
+                    is_revanced = True
+                    break
 
-    logging.info(f"🔍 Detected: {'Morphe' if is_morphe else 'ReVanced'} source type")
+        # If still not detected, fallback to source name
+        if not is_morphe and not is_revanced:
+            is_morphe = "morphe" in source.lower() or "custom" in source.lower()
+            is_revanced = not is_morphe  # Default to ReVanced if not Morphe
 
-    # FIND FILES BASED ON DETECTED TYPE
-    if is_morphe:
-        # Find Morphe files - prefer non-dev version
-        cli = utils.find_file(download_files, contains="morphe-cli", suffix=".jar", exclude=["dev"])
-        if not cli:
-            # Fallback to any Morphe CLI
-            cli = utils.find_file(download_files, contains="morphe", suffix=".jar")
-        
-        patches = utils.find_file(download_files, contains="patches", suffix=".mpp")
-        if not patches:
-            # Fallback to any .mpp file
-            patches = utils.find_file(download_files, suffix=".mpp")
-    else:
-        # Find ReVanced files
-        cli = utils.find_file(download_files, contains="revanced-cli", suffix=".jar")
-        patches = utils.find_file(download_files, contains="patches", suffix=".rvp")
-        
-        if not patches:
-            # Try .jar extension for patches
-            patches = utils.find_file(download_files, contains="patches", suffix=".jar")
+        logging.info(f"🔍 Detected: {'Morphe' if is_morphe else 'ReVanced'} source type")
+
+        # FIND FILES BASED ON DETECTED TYPE
+        if is_morphe:
+            # Find Morphe files - prefer non-dev version
+            cli = utils.find_file(download_files, contains="morphe-cli", suffix=".jar", exclude=["dev"])
+            if not cli:
+                # Fallback to any Morphe CLI
+                cli = utils.find_file(download_files, contains="morphe", suffix=".jar")
+            
+            patches = utils.find_file(download_files, contains="patches", suffix=".mpp")
+            if not patches:
+                # Fallback to any .mpp file
+                patches = utils.find_file(download_files, suffix=".mpp")
+        else:
+            # Find ReVanced files
+            cli = utils.find_file(download_files, contains="revanced-cli", suffix=".jar")
+            patches = utils.find_file(download_files, contains="patches", suffix=".rvp")
+            
+            if not patches:
+                # Try .jar extension for patches
+                patches = utils.find_file(download_files, contains="patches", suffix=".jar")
 
     # Validate tools
     if not cli:
@@ -225,7 +234,35 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
 
         try:
             # USE DIFFERENT COMMANDS BASED ON SOURCE TYPE
-            if is_morphe:
+            if is_revenge:
+                logging.info("🔧 Using LSPatch / Revenge patching system...")
+                lspatch_cmd = [
+                    "java", "-jar", str(cli), str(input_apk),
+                    "-m", str(patches),
+                    "-v", "-f", "-o", "./"
+                ]
+                utils.run_process(lspatch_cmd, capture=True, stream=True)
+                
+                # LSPatch outputs a file named `base-lspatched.apk` or similar in the current dir
+                # Let's find the output file and rename it to `output_apk`
+                input_stem = input_apk.stem
+                found_patched = False
+                for f in Path(".").glob(f"*{input_stem}*-lspatched.apk"):
+                    f.rename(output_apk)
+                    found_patched = True
+                    break
+                
+                if not found_patched:
+                    # fallback, try any lspatched.apk
+                    for f in Path(".").glob("*-lspatched.apk"):
+                        f.rename(output_apk)
+                        found_patched = True
+                        break
+                
+                if not found_patched:
+                    raise subprocess.CalledProcessError(1, lspatch_cmd, output="Failed to find LSPatch output apk")
+                    
+            elif is_morphe:
                 logging.info("🔧 Using Morphe patching system...")
                 try:
                     morphe_cmd = [

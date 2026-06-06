@@ -36,6 +36,25 @@ def download_resource(url: str, name: str = None) -> Path:
     return filepath
 
 def download_required(source: str) -> tuple[list[Path], str]:
+    if source == "revenge":
+        downloaded_files = []
+        logging.info("Downloading Revenge tools (LSPatch and Revenge Xposed)...")
+        # Download LSPatch
+        release_lspatch = utils.detect_github_release("JingMatrix", "LSPatch", "latest")
+        for asset in release_lspatch["assets"]:
+            if asset["name"] == "lspatch.jar":
+                downloaded_files.append(download_resource(asset["browser_download_url"]))
+                break
+        
+        # Download Revenge Xposed
+        release_revenge = utils.detect_github_release("revenge-mod", "revenge-xposed", "latest")
+        for asset in release_revenge["assets"]:
+            if asset["name"] == "app-release.apk":
+                downloaded_files.append(download_resource(asset["browser_download_url"], "revenge-xposed.apk"))
+                break
+
+        return downloaded_files, "revenge"
+
     source_path = Path("sources") / f"{source}.json"
     with source_path.open() as json_file:
         repos_info = json.load(json_file)

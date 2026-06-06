@@ -72,12 +72,27 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: 3.11
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
       
       - name: Install Dependencies
         run: |
           pip install -r requirements.txt
           pip install requests beautifulsoup4
-      
+
+      - name: Start FlareSolverr
+        run: |
+          docker run -d --name flaresolverr -p 8191:8191 ghcr.io/flaresolverr/flaresolverr:latest
+          echo "[*] Waiting for FlareSolverr to start..."
+          until curl -s -f http://localhost:8191/ > /dev/null; do
+              sleep 2
+          done
+          echo "[+] FlareSolverr is ready."
+
       - name: Build APK
         env:
           APP_NAME: ${{ inputs.app_name }}

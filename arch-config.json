@@ -23,5 +23,10 @@
     "app_name": "twitch",
     "source": "de-vanced",
     "arches": ["arm64-v8a"]
+  },
+  {
+    "app_name": "discord",
+    "source": "revenge",
+    "arches": ["arm64-v8a"]
   }
 ]

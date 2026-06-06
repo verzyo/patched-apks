@@ -184,6 +184,10 @@ def get_highest_version(versions: list[str]) -> str | None:
 def get_supported_versions(package_name: str, cli: str, patches: str) -> list[str]:
     # Morphe CLI and ReVanced CLI have different list-versions syntax
     cli_name = Path(cli).name.lower()
+    
+    if "lspatch" in cli_name:
+        return []
+
     is_morphe_cli = 'morphe' in cli_name
     is_revanced_v6_or_newer = 'revanced-cli-6' in cli_name or 'revanced-cli-7' in cli_name or 'revanced-cli-8' in cli_name
 

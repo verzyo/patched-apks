@@ -269,135 +269,135 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
     if not correct_version_page:
         logging.info("Scraping didn't find the page, falling back to URL construction...")
     
-    # Use release_prefix if available, otherwise use app name
-    release_name = config.get('release_prefix', config['name'])
+        # Use release_prefix if available, otherwise use app name
+        release_name = config.get('release_prefix', config['name'])
     
-    # Loop backwards: Try full version, then strip parts
-    for i in range(len(version_parts), 0, -1):
-        current_ver_str = "-".join(version_parts[:i])
-        
-        # If build number exists, append it to the last version part in URL
-        if build_number and i == len(version_parts):
-            if build_format == 'build_suffix':
-                # e.g., "6-6" + "build-006" -> "6-6-build-006"
-                current_ver_str = current_ver_str + "-build-" + build_number
-            else:
-                # e.g., "32-30-0" + "1575420" -> "32-30-01575420"
-                parts = version_parts[:i]
-                parts[-1] = parts[-1] + build_number
-                current_ver_str = "-".join(parts)
-        
-        # Generate ALL possible URL patterns in priority order
-        url_patterns = []
-        
-        # URL-encode the release_name to handle unicode characters like ․
-        encoded_release_name = quote(release_name, safe='')
-        encoded_name = quote(config['name'], safe='')
-        
-        # Priority 1: With release_name and -release suffix (most specific)
-        url_patterns.append(f"{base_url}/apk/{config['org']}/{encoded_name}/{encoded_release_name}-{current_ver_str}-release/")
-        
-        # Priority 2: With app name and -release suffix
-        if release_name != config['name']:
-            url_patterns.append(f"{base_url}/apk/{config['org']}/{encoded_name}/{encoded_name}-{current_ver_str}-release/")
-        
-        # Priority 3: With release_name without -release
-        url_patterns.append(f"{base_url}/apk/{config['org']}/{encoded_name}/{encoded_release_name}-{current_ver_str}/")
-        
-        # Priority 4: With app name without -release
-        if release_name != config['name']:
-            url_patterns.append(f"{base_url}/apk/{config['org']}/{encoded_name}/{encoded_name}-{current_ver_str}/")
-        
-        # Remove duplicate patterns
-        url_patterns = list(dict.fromkeys(url_patterns))
-        
-        for url in url_patterns:
-            logging.info(f"Checking potential release URL: {url}")
+        # Loop backwards: Try full version, then strip parts
+        for i in range(len(version_parts), 0, -1):
+            current_ver_str = "-".join(version_parts[:i])
             
-            try:
-                response = session.get(url)
-                if response.status_code == 200:
-                    soup = BeautifulSoup(response.content, "html.parser")
-                    page_text = soup.get_text()
-                    
-                    # VALIDATION: Check if this page is for our EXACT version
-                    # Check multiple possible version formats
-                    version_checks = [
-                        version,  # 6.6
-                        version.replace('.', '-'),  # 6-6
-                        current_ver_str,  # 6-6-build-002 (if stripped)
-                        ".".join(version_parts[:i])  # 6.6 (if stripped)
-                    ]
-                    
-                    # Add build suffix format if we have a build number
-                    if build_number:
-                        if build_format == 'build_suffix':
-                            version_checks.append(f"{version} build {build_number}")  # 6.6 build 002
-                            version_checks.append(f"{version.replace('.', '-')}-build-{build_number}")  # 6-6-build-002
-                        else:
-                            version_checks.append(f"{version}({build_number})")  # 32.30.0(1575420)
-                    
-                    # Also check page title and headings for version
-                    title_tag = soup.find('title')
-                    headings = soup.find_all(['h1', 'h2', 'h3'])
-                    
-                    is_correct_page = False
-                    
-                    # Check in page text
-                    for check in version_checks:
-                        if check and check in page_text:
-                            # Accept version match if it's the base version or includes build info
-                            if check == version or check == version.replace('.', '-') or check == current_ver_str:
-                                is_correct_page = True
-                                break
-                    
-                    # Check in title and headings
-                    if not is_correct_page:
-                        for heading in headings:
-                            heading_text = heading.get_text()
-                            for check in version_checks:
-                                if check and check in heading_text:
+            # If build number exists, append it to the last version part in URL
+            if build_number and i == len(version_parts):
+                if build_format == 'build_suffix':
+                    # e.g., "6-6" + "build-006" -> "6-6-build-006"
+                    current_ver_str = current_ver_str + "-build-" + build_number
+                else:
+                    # e.g., "32-30-0" + "1575420" -> "32-30-01575420"
+                    parts = version_parts[:i]
+                    parts[-1] = parts[-1] + build_number
+                    current_ver_str = "-".join(parts)
+            
+            # Generate ALL possible URL patterns in priority order
+            url_patterns = []
+            
+            # URL-encode the release_name to handle unicode characters like ․
+            encoded_release_name = quote(release_name, safe='')
+            encoded_name = quote(config['name'], safe='')
+            
+            # Priority 1: With release_name and -release suffix (most specific)
+            url_patterns.append(f"{base_url}/apk/{config['org']}/{encoded_name}/{encoded_release_name}-{current_ver_str}-release/")
+            
+            # Priority 2: With app name and -release suffix
+            if release_name != config['name']:
+                url_patterns.append(f"{base_url}/apk/{config['org']}/{encoded_name}/{encoded_name}-{current_ver_str}-release/")
+            
+            # Priority 3: With release_name without -release
+            url_patterns.append(f"{base_url}/apk/{config['org']}/{encoded_name}/{encoded_release_name}-{current_ver_str}/")
+            
+            # Priority 4: With app name without -release
+            if release_name != config['name']:
+                url_patterns.append(f"{base_url}/apk/{config['org']}/{encoded_name}/{encoded_name}-{current_ver_str}/")
+            
+            # Remove duplicate patterns
+            url_patterns = list(dict.fromkeys(url_patterns))
+            
+            for url in url_patterns:
+                logging.info(f"Checking potential release URL: {url}")
+                
+                try:
+                    response = session.get(url)
+                    if response.status_code == 200:
+                        soup = BeautifulSoup(response.content, "html.parser")
+                        page_text = soup.get_text()
+                        
+                        # VALIDATION: Check if this page is for our EXACT version
+                        # Check multiple possible version formats
+                        version_checks = [
+                            version,  # 6.6
+                            version.replace('.', '-'),  # 6-6
+                            current_ver_str,  # 6-6-build-002 (if stripped)
+                            ".".join(version_parts[:i])  # 6.6 (if stripped)
+                        ]
+                        
+                        # Add build suffix format if we have a build number
+                        if build_number:
+                            if build_format == 'build_suffix':
+                                version_checks.append(f"{version} build {build_number}")  # 6.6 build 002
+                                version_checks.append(f"{version.replace('.', '-')}-build-{build_number}")  # 6-6-build-002
+                            else:
+                                version_checks.append(f"{version}({build_number})")  # 32.30.0(1575420)
+                        
+                        # Also check page title and headings for version
+                        title_tag = soup.find('title')
+                        headings = soup.find_all(['h1', 'h2', 'h3'])
+                        
+                        is_correct_page = False
+                        
+                        # Check in page text
+                        for check in version_checks:
+                            if check and check in page_text:
+                                # Accept version match if it's the base version or includes build info
+                                if check == version or check == version.replace('.', '-') or check == current_ver_str:
                                     is_correct_page = True
                                     break
-                            if is_correct_page:
-                                break
-                    
-                    if not is_correct_page and title_tag:
-                        title_text = title_tag.get_text()
-                        for check in version_checks:
-                            if check and check in title_text:
-                                is_correct_page = True
-                                break
-                    
-                    if is_correct_page:
-                        content_size = len(response.content)
-                        logging.info(f"✓ Correct version page found: {response.url}")
-                        found_soup = soup
-                        correct_version_page = True
-                        break  # Found correct page!
-                    else:
-                        # Page exists but doesn't have our version as primary
-                        logging.warning(f"Page found but not for version {version}: {url}")
-                        # Save as fallback ONLY if we haven't found any page yet
-                        if found_soup is None:
+                        
+                        # Check in title and headings
+                        if not is_correct_page:
+                            for heading in headings:
+                                heading_text = heading.get_text()
+                                for check in version_checks:
+                                    if check and check in heading_text:
+                                        is_correct_page = True
+                                        break
+                                if is_correct_page:
+                                    break
+                        
+                        if not is_correct_page and title_tag:
+                            title_text = title_tag.get_text()
+                            for check in version_checks:
+                                if check and check in title_text:
+                                    is_correct_page = True
+                                    break
+                        
+                        if is_correct_page:
+                            content_size = len(response.content)
+                            logging.info(f"✓ Correct version page found: {response.url}")
                             found_soup = soup
-                            logging.warning(f"Saved as fallback page (may list multiple versions)")
+                            correct_version_page = True
+                            break  # Found correct page!
+                        else:
+                            # Page exists but doesn't have our version as primary
+                            logging.warning(f"Page found but not for version {version}: {url}")
+                            # Save as fallback ONLY if we haven't found any page yet
+                            if found_soup is None:
+                                found_soup = soup
+                                logging.warning(f"Saved as fallback page (may list multiple versions)")
+                            continue
+                            
+                    elif response.status_code == 404:
+                        logging.info(f"URL not found (404): {url}")
+                        continue
+                    else:
+                        logging.warning(f"URL {url} returned status {response.status_code}")
                         continue
                         
-                elif response.status_code == 404:
-                    logging.info(f"URL not found (404): {url}")
+                except Exception as e:
+                    logging.warning(f"Error checking {url}: {str(e)[:50]}")
                     continue
-                else:
-                    logging.warning(f"URL {url} returned status {response.status_code}")
-                    continue
-                    
-            except Exception as e:
-                logging.warning(f"Error checking {url}: {str(e)[:50]}")
-                continue
-        
-        if correct_version_page:
-            break  # Found correct page for this version part
-    
+            
+            if correct_version_page:
+                break  # Found correct page for this version part
+
     # If we didn't find the exact version page but found a fallback
     if not correct_version_page and found_soup:
         logging.warning(f"Using fallback page for {app_name} {version} (may contain multiple versions)")
