@@ -170,7 +170,7 @@ jobs:
           
           # 2. CREATE RELEASE NOTES
           cat > release_notes.md << EOF
-          # Morphe APKs
+          # Patched APKs
           
           ## 📱 Available Apps
           EOF
@@ -189,7 +189,7 @@ jobs:
           **Architecture:** ${{ inputs.architecture }}
           **Source:** ${{ inputs.source }}
           
-          Auto-updates daily at 6 AM UTC.
+          Auto-updates daily at 2 AM UTC.
           EOF
           
           # 3. PERFORM UPDATE (CLOBBER) OR CREATE
@@ -200,13 +200,13 @@ jobs:
             
             echo "📝 Updating release title and notes..."
             gh release edit latest \
-              --title "Morphe APKs - $(date +'%Y-%m-%d %H:%M')" \
+              --title "Patched APKs - $(date +'%Y-%m-%d %H:%M')" \
               --notes-file release_notes.md
               
           else
             echo "🚀 Creating new release..."
             gh release create "latest" \
-              --title "Morphe APKs - $(date +'%Y-%m-%d %H:%M')" \
+              --title "Patched APKs - $(date +'%Y-%m-%d %H:%M')" \
               --notes-file release_notes.md \
               *.apk \
               --latest

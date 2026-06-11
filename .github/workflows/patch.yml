@@ -1,4 +1,4 @@
-name: Auto Build and Release Morphe
+name: Auto Build and Release Patched APKs
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -16,7 +16,7 @@ on:
 
 jobs:
   download-tools:
-    name: Download Morphe Tools
+    name: Download Tools
     runs-on: ubuntu-latest
     outputs:
       cache-key: ${{ steps.cache-key.outputs.cache-key }}
@@ -31,7 +31,7 @@ jobs:
         with:
           python-version: 3.11
       
-      - name: Download Morphe Tools
+      - name: Download Tools
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -354,7 +354,7 @@ jobs:
           sort -u current_assets.txt > release_assets.txt
 
           cat > release_notes.md << 'EOF'
-          # Morphe APKs - Auto Built
+          # Patched APKs - Auto Built
           
           ## 📱 Available Apps
           
@@ -369,9 +369,9 @@ jobs:
           ---
           
           ## ⚙️ Build Information
-          - **Auto-built daily at 6 AM UTC**
+          - **Auto-built daily at 2 AM UTC**
           - **Multiple architecture support** (arm64-v8a, armeabi-v7a, universal)
-          - **Latest Morphe patches**
+          - **Latest patches**
           - **Updated automatically**
           
           ## 📊 Architecture Guide
@@ -383,7 +383,7 @@ jobs:
           These APKs are built automatically. Use at your own risk.
           
           ## 🔄 Update Schedule
-          - Automatic updates daily at 6 AM UTC
+          - Automatic updates daily at 2 AM UTC
           - Manual updates available via workflow dispatch
           - Creates `latest` if missing and uploads rebuilt assets in place
           EOF
@@ -428,12 +428,12 @@ jobs:
             # Upload new APKs and manifest
             gh release upload latest "${ASSETS[@]}" --clobber
             gh release edit latest \
-              --title "Morphe APKs - $(date +'%Y-%m-%d %H:%M')" \
+              --title "Patched APKs - $(date +'%Y-%m-%d %H:%M')" \
               --notes-file release_notes.md
           else
             echo "🆕 Creating 'latest' release..."
             gh release create "latest" \
-              --title "Morphe APKs - $(date +'%Y-%m-%d %H:%M')" \
+              --title "Patched APKs - $(date +'%Y-%m-%d %H:%M')" \
               --notes-file release_notes.md \
               "${ASSETS[@]}" \
               --latest
