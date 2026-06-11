@@ -195,6 +195,24 @@ jobs:
           # 3. PERFORM UPDATE (CLOBBER) OR CREATE
           if [ "${{ steps.check-release.outputs.release_exists }}" == "true" ]; then
             echo "⬆️ Uploading new assets (clobbering existing)..."
+            
+            # Delete old APK versions that are being replaced
+            for apk in *.apk; do
+              if [[ "$apk" == *.apk ]]; then
+                filename=$(basename "$apk")
+                prefix=$(echo "$filename" | sed -r 's/-v[0-9].*\.apk$//')
+                if [ -f current_assets.txt ]; then
+                  old_assets=$(grep -E "^${prefix}-v[0-9].*\.apk$" current_assets.txt || true)
+                  for old_asset in $old_assets; do
+                    if [ "$old_asset" != "$filename" ]; then
+                      echo "🗑️ Deleting old version $old_asset from latest release..."
+                      gh release delete-asset latest "$old_asset" -y || true
+                    fi
+                  done
+                fi
+              fi
+            done
+            
             # --clobber overwrites the file if it exists, adds it if it doesn't
             gh release upload latest *.apk --clobber
             

@@ -420,8 +420,16 @@ jobs:
             for apk in "${ASSETS[@]}"; do
               if [[ "$apk" == *.apk ]]; then
                 filename=$(basename "$apk")
-                echo "🗑️ Deleting old version of $filename from latest release..."
-                gh release delete latest "$filename" --yes || true
+                prefix=$(echo "$filename" | sed -r 's/-v[0-9].*\.apk$//')
+                if [ -f current_assets.txt ]; then
+                  old_assets=$(grep -E "^${prefix}-v[0-9].*\.apk$" current_assets.txt || true)
+                  for old_asset in $old_assets; do
+                    if [ "$old_asset" != "$filename" ]; then
+                      echo "🗑️ Deleting old version $old_asset from latest release..."
+                      gh release delete-asset latest "$old_asset" -y || true
+                    fi
+                  done
+                fi
               fi
             done
             
