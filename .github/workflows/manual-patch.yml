@@ -102,6 +102,7 @@ jobs:
         run: |
           echo "🔧 Building ${{ inputs.app_name }} with ${{ inputs.source }} for ${{ inputs.architecture }} architecture..."
           python -m src
+          rm -f revenge-xposed.apk
       
       - name: Find Built APK
         id: find-apk

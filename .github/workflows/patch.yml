@@ -190,6 +190,7 @@ jobs:
           sleep $((RANDOM % 30)).$((RANDOM % 100))
           
           python -m src
+          rm -f revenge-xposed.apk
 
       - name: Record Build Outputs
         if: always()
